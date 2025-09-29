@@ -7,25 +7,54 @@ Simple Budgetは、個人の収支管理を効率的に行うためのWebアプ�
 ## アーキテクチャ
 
 ### システム構成図
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   Backend       │    │   Database      │
-│   (Next.js 15) │───▶│   (Express.js)  │───▶│   (MySQL)       │
-│   App Router    │    │   TypeScript    │    │   Amazon RDS    │
-│   TypeScript    │    │   Prisma ORM    │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                        │                        
-         │                        │                        
-         ▼                        ▼                        
-┌─────────────────┐    ┌─────────────────┐               
-│   Vercel        │    │   AWS Services  │               
-│   (Frontend     │    │   - App Runner  │               
-│    Hosting)     │    │   - ECR         │               
-└─────────────────┘    │   - Parameter   │               
-                       │     Store       │               
-                       │   - VPC         │               
-                       │   - IAM         │               
-                       └─────────────────┘               
+```mermaid
+graph TD
+    subgraph Client["クライアント層"]
+        UI["Frontend<br/>Next.js 15<br/>TypeScript"]
+    end
+    
+    subgraph App["アプリケーション層"]
+        API["Backend API<br/>Express.js<br/>Prisma ORM"]
+    end
+    
+    subgraph Data["データ層"]
+        DB[("Database<br/>MySQL<br/>Amazon RDS")]
+    end
+    
+    subgraph Hosting["ホスティング・インフラ"]
+        VERCEL["Vercel<br/>Frontend Hosting"]
+        
+        subgraph AWS["AWS Services"]
+            RUNNER["App Runner"]
+            ECR["ECR<br/>Docker Images"]
+            STORE["Parameter Store"]
+            VPC["VPC Network"]
+            IAM["IAM Roles"]
+        end
+    end
+    
+    UI --> API
+    API --> DB
+    UI -.-> VERCEL
+    API -.-> RUNNER
+    RUNNER --> ECR
+    RUNNER --> STORE
+    RUNNER --> VPC
+    VPC --> DB
+    IAM --> RUNNER
+    IAM --> STORE
+    
+    classDef frontend fill:#e3f2fd
+    classDef backend fill:#f3e5f5
+    classDef database fill:#e8f5e8
+    classDef aws fill:#fff3e0
+    classDef hosting fill:#fce4ec
+    
+    class UI frontend
+    class API backend
+    class DB database
+    class RUNNER,ECR,STORE,VPC,IAM aws
+    class VERCEL hosting
 ```
 
 ## 技術スタック
