@@ -18,8 +18,8 @@ services:
       - PORT=8080
     volumes:
       - ./backend:/app # ホストマシンの ./backendディレクトリを コンテナ内の /app ディレクトリにマウントする -> ホスト上のソースコードの変更がリアルタイムでコンテナに反映されるため、開発中にコードを変更した際コンテナを再ビルドせずに変更が反映される
-      - /app/node_modules # 匿名ボリューム Anonymous Volume -> コンテナ内の /app/node_modules ディレクトリをDockerが管理する内部ストレージにマウントする ※ホストマシンの特定のディレクトリにはマウントしない
-      - /app/dist # 匿名ボリューム Anonymous Volume -> コンテナ内の /app/dist ディレクトリをDockerが管理する内部ストレージにマウントする ※ホストマシンの特定のディレクトリにはマウントしない
+      - backend_node_modules:/app/node_modules
+      - backend_dist:/app/dist 
     depends_on:
       mysql:
         condition: service_healthy # MySQLコンテナのヘルスチェックが成功するまで待機
@@ -50,10 +50,14 @@ services:
       retries: 10
       start_period: 30s
 
-  networks:
-    simple-budget-network:
-      driver: bridge
+networks:
+  simple-budget-network:
+    driver: bridge
 
-  volumes:
-    mysql_data:
-      driver: local
+volumes:
+  mysql_data:
+    driver: local
+  backend_node_modules:
+    driver: local
+  backend_dist:
+    driver: local
