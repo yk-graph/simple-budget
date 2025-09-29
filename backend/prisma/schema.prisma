@@ -13,8 +13,8 @@ model User {
   email     String   @unique
   password  String
   name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   transactions Transaction[]
   categories   Category[]
@@ -30,10 +30,10 @@ model Transaction {
   type        TransactionType
   description String?
   date        DateTime
-  userId      String
-  categoryId  String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  userId      String          @map("user_id")
+  categoryId  String?         @map("category_id")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
@@ -54,9 +54,9 @@ model Category {
   id        String          @id @default(uuid())
   name      String
   type      TransactionType
-  userId    String
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  userId    String          @map("user_id")
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
 
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
@@ -69,15 +69,15 @@ model Category {
 // セッション管理テーブル
 model Session {
   id           String   @id @default(uuid())
-  sessionToken String   @unique
-  refreshToken String   @unique
-  userId       String
-  expiresAt    DateTime
-  isActive     Boolean  @default(true)
-  deviceInfo   String?
-  ipAddress    String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  sessionToken String   @unique @map("session_token") @db.VarChar(512)
+  refreshToken String   @unique @map("refresh_token") @db.VarChar(512)
+  userId       String   @map("user_id")
+  expiresAt    DateTime @map("expires_at")
+  isActive     Boolean  @default(true) @map("is_active")
+  deviceInfo   String?  @map("device_info")
+  ipAddress    String?  @map("ip_address")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

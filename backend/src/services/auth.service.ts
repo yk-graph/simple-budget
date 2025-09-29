@@ -50,6 +50,7 @@ export class AuthService {
       userId: user.id,
       email: user.email,
     })
+    console.log('Access Token length >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', accessToken.length)
 
     const refreshToken = JwtUtil.generateRefreshToken({
       userId: user.id,

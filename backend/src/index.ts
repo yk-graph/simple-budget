@@ -1,24 +1,52 @@
+import express, { Request, Response } from 'express'
+import cors from 'cors'
 import { PrismaClient } from '@prisma/client'
+import { env } from './config/env'
+import routes from './routes'
+import { errorMiddleware } from './middleware/error.middleware'
 
+// Prismaクライアント初期化
 const prisma = new PrismaClient()
 
-async function main() {
-  // データベース接続テスト
-  const result = await prisma.$queryRaw`SELECT 1`
-  console.log('✅ Database connected successfully')
-  console.log('Result:', result)
+// Expressアプリ初期化
+const app = express()
 
-  // ユーザー数を取得
-  const userCount = await prisma.user.count()
-  console.log(`📊 User count: ${userCount}`)
-}
+// ミドルウェア
+app.use(cors())
+app.use(express.json())
 
-main()
-  .then(async () => {
-    await prisma.$disconnect()
-  })
-  .catch(async (e) => {
-    console.error('❌ Error:', e)
-    await prisma.$disconnect()
-    process.exit(1)
-  })
+// ヘルスチェックエンドポイント
+app.get('/health', (req: Request, res: Response) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+})
+
+// データベース接続確認エンドポイント
+app.get('/db-health', async (req: Request, res: Response) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    res.json({
+      status: 'ok',
+      database: 'connected',
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      database: 'disconnected',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    })
+  }
+})
+
+// APIルート
+app.use('/api', routes)
+
+// エラーハンドリングミドルウェア（最後に配置）
+app.use(errorMiddleware)
+
+// サーバー起動
+app.listen(env.PORT, () => {
+  console.log(`🚀 Server is running on http://localhost:${env.PORT}`)
+  console.log(`📊 Environment: ${env.NODE_ENV}`)
+  console.log(`🗄️ Database: ${env.DATABASE_URL.split('@')[1]?.split('/')[0]}`)
+})
