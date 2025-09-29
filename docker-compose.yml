@@ -1,0 +1,59 @@
+version: '3.9'
+
+services:
+  # バックエンドAPI
+  backend:
+    build:
+      context: ./backend # ビルドコンテキストの指定 -> Dockerfileが参照できるファイルやディレクトリの範囲を指定している
+      dockerfile: Dockerfile # 使用するDockerfileの名前を指定
+      target: development  # 開発環境用ステージを指定 -> Dockerfile内の development ステージが使用される
+    container_name: simple-budget-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - PORT=8080
+    volumes:
+      - ./backend:/app # ホストマシンの ./backendディレクトリを コンテナ内の /app ディレクトリにマウントする -> ホスト上のソースコードの変更がリアルタイムでコンテナに反映されるため、開発中にコードを変更した際コンテナを再ビルドせずに変更が反映される
+      - /app/node_modules # 匿名ボリューム Anonymous Volume -> コンテナ内の /app/node_modules ディレクトリをDockerが管理する内部ストレージにマウントする ※ホストマシンの特定のディレクトリにはマウントしない
+      - /app/dist # 匿名ボリューム Anonymous Volume -> コンテナ内の /app/dist ディレクトリをDockerが管理する内部ストレージにマウントする ※ホストマシンの特定のディレクトリにはマウントしない
+    depends_on:
+      mysql:
+        condition: service_healthy # MySQLコンテナのヘルスチェックが成功するまで待機
+    networks:
+      - simple-budget-network
+    restart: unless-stopped # Docker Composeの再起動ポリシーを定義 -> コンテナが停止した場合に自動的に再起動するように設定
+
+  # MySQL（ローカル開発用）
+  mysql:
+    image: mysql:8.0.42
+    container_name: simple-budget-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - simple-budget-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+
+  networks:
+    simple-budget-network:
+      driver: bridge
+
+  volumes:
+    mysql_data:
+      driver: local
