@@ -1,12 +1,33 @@
 version: '3.9'
 
 services:
-  # バックエンドAPI
+  frontend:
+    build:
+      context: ./frontend # ビルドコンテキストの指定 -> Dockerfileが参照できるファイルやディレクトリの範囲を指定している
+      dockerfile: Dockerfile # 使用するDockerfileの名前を指定
+      target: development # 開発環境用ステージを指定 -> Dockerfile内の development ステージが使用される
+    container_name: simple-budget-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://backend:8080/api
+      - BACKEND_URL=http://backend:8080/api
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+      - frontend_next:/app/.next
+    depends_on:
+      - backend
+    networks:
+      - simple-budget-network
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend # ビルドコンテキストの指定 -> Dockerfileが参照できるファイルやディレクトリの範囲を指定している
       dockerfile: Dockerfile # 使用するDockerfileの名前を指定
-      target: development  # 開発環境用ステージを指定 -> Dockerfile内の development ステージが使用される
+      target: development # 開発環境用ステージを指定 -> Dockerfile内の development ステージが使用される
     container_name: simple-budget-backend
     ports:
       - "8080:8080"
@@ -60,4 +81,8 @@ volumes:
   backend_node_modules:
     driver: local
   backend_dist:
+    driver: local
+  frontend_node_modules:
+    driver: local
+  frontend_next:
     driver: local
