@@ -11,7 +11,7 @@ const createTransactionSchema = z.object({
   }),
   description: z.string().max(500).optional(),
   date: z.string().datetime().or(z.date()),
-  categoryId: z.string().uuid().optional(),
+  categoryId: z.number().int().positive('カテゴリIDは必須です'),
 })
 
 const updateTransactionSchema = z.object({
@@ -23,12 +23,12 @@ const updateTransactionSchema = z.object({
     .optional(),
   description: z.string().max(500).optional(),
   date: z.string().datetime().or(z.date()).optional(),
-  categoryId: z.string().uuid().optional(),
+  categoryId: z.number().int().positive().optional(),
 })
 
 const getTransactionsQuerySchema = z.object({
   type: z.enum(['INCOME', 'EXPENSE']).optional(),
-  categoryId: z.string().uuid().optional(),
+  categoryId: z.string().regex(/^\d+$/).transform(Number).optional(),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
   page: z.string().regex(/^\d+$/).transform(Number).optional(),

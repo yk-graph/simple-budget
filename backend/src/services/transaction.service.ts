@@ -7,7 +7,7 @@ export interface CreateTransactionDto {
   type: TransactionType
   description?: string
   date: Date
-  categoryId?: string
+  categoryId: number
 }
 
 export interface UpdateTransactionDto {
@@ -15,12 +15,12 @@ export interface UpdateTransactionDto {
   type?: TransactionType
   description?: string
   date?: Date
-  categoryId?: string
+  categoryId?: number
 }
 
 export interface GetTransactionsQuery {
   type?: TransactionType
-  categoryId?: string
+  categoryId?: number
   startDate?: Date
   endDate?: Date
   page?: number

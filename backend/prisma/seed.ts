@@ -13,12 +13,13 @@ async function main() {
 
   // 1. ダミーユーザー作成
   console.log('👤 Creating dummy user...')
+  const hashedPassword = await bcrypt.hash('password', 10)
   const user = await prisma.user.upsert({
     where: { email: 'demo@example.com' },
     update: {},
     create: {
       email: 'demo@example.com',
-      password: 'password',
+      password: hashedPassword,
       name: 'デモユーザー',
     },
   })
@@ -71,8 +72,8 @@ async function main() {
   console.log(`✅ Created ${incomeCategories.length} income categories`)
 
   // カテゴリIDのマップを作成
-  const expenseCategoryMap = Object.fromEntries(expenseCategories.map((c) => [c.name, c.id]))
-  const incomeCategoryMap = Object.fromEntries(incomeCategories.map((c) => [c.name, c.id]))
+  const expenseCategoryMap: Record<string, number> = Object.fromEntries(expenseCategories.map((c) => [c.name, c.id]))
+  const incomeCategoryMap: Record<string, number> = Object.fromEntries(incomeCategories.map((c) => [c.name, c.id]))
 
   // 4. 2025年8月の取引データ作成
   console.log('💰 Creating transactions for August 2025...')

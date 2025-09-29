@@ -31,12 +31,12 @@ model Transaction {
   description String?
   date        DateTime
   userId      String          @map("user_id")
-  categoryId  String?         @map("category_id")
+  categoryId  Int             @map("category_id")
   createdAt   DateTime        @default(now()) @map("created_at")
   updatedAt   DateTime        @updatedAt @map("updated_at")
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([date])
@@ -51,7 +51,7 @@ enum TransactionType {
 
 // カテゴリテーブル
 model Category {
-  id        String          @id @default(uuid())
+  id        Int             @id @default(autoincrement())
   name      String
   type      TransactionType
   userId    String          @map("user_id")
