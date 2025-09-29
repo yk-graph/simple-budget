@@ -1,0 +1,29 @@
+import { Request, Response, NextFunction } from 'express'
+import { ZodError } from 'zod'
+import { Prisma } from '@prisma/client'
+import { ResponseUtil } from '../utils/response.util'
+
+export const errorMiddleware = (error: Error, req: Request, res: Response, next: NextFunction) => {
+  console.error('Error:', error)
+
+  // Zodバリデーションエラー
+  if (error instanceof ZodError) {
+    const messages = error.errors.map((err) => err.message).join(', ')
+    return ResponseUtil.validationError(res, messages)
+  }
+
+  // Prismaエラー
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    // ユニーク制約違反
+    if (error.code === 'P2002') {
+      return ResponseUtil.error(res, 'Resource already exists', 409)
+    }
+    // レコードが見つからない
+    if (error.code === 'P2025') {
+      return ResponseUtil.notFound(res, 'Resource not found')
+    }
+  }
+
+  // デフォルトエラー
+  return ResponseUtil.error(res, error.message || 'Internal server error', 500)
+}

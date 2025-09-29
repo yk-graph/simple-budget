@@ -5,7 +5,7 @@ interface ApiResponse<T = any> {
   data?: T
   error?: {
     message: string
-    code: string
+    code?: string
   }
 }
 
@@ -20,7 +20,7 @@ export class ResponseUtil {
   }
 
   // エラーレスポンス
-  static error(res: Response, message: string, statusCode: number = 500, code: string) {
+  static error(res: Response, message: string, statusCode: number = 500, code?: string) {
     const response: ApiResponse = {
       success: false,
       error: {
