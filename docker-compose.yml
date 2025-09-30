@@ -25,6 +25,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: development # Dockerfile内のターゲットステージを指定 -> 開発用イメージをビルド
     container_name: simple-budget-backend
     ports:
       - "${BACKEND_PORT}:8080"

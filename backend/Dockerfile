@@ -27,21 +27,31 @@ EXPOSE 8080
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["npm", "run", "dev"]
 
-# 本番実行ステージ
-FROM base AS production
+# ビルドステージ（型定義を含めてビルド）
+FROM base AS builder
 
-# 本番用依存関係のみ
-RUN npm ci --only=production
+# devDependenciesも含めてインストール（型定義に必要）
+RUN npm ci
 
 COPY . .
-
-# 本番環境でも同様にエントリーポイントシェルスクリプトをコピーして実行権限を付与
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Prisma生成とTypeScriptビルド
 RUN npx prisma generate
 RUN npm run build
+
+# 本番実行ステージ
+FROM base AS production
+
+# 本番用依存関係のみインストール
+RUN npm ci --only=production
+
+# ビルドステージから成果物をコピー
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/prisma ./prisma
+
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 8080
 
