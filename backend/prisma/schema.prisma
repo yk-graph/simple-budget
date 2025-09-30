@@ -17,7 +17,6 @@ model User {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   transactions Transaction[]
-  categories   Category[]
   sessions     Session[]
 
   @@map("users")
@@ -39,6 +38,7 @@ model Transaction {
   category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([categoryId])
   @@index([date])
   @@map("transactions")
 }
@@ -54,15 +54,12 @@ model Category {
   id        Int             @id @default(autoincrement())
   name      String
   type      TransactionType
-  userId    String          @map("user_id")
   createdAt DateTime        @default(now()) @map("created_at")
   updatedAt DateTime        @updatedAt @map("updated_at")
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
 
-  @@unique([name, userId, type])
-  @@index([userId])
+  @@unique([name, type])
   @@map("categories")
 }
 
