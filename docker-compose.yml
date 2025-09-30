@@ -3,69 +3,66 @@ version: '3.9'
 services:
   frontend:
     build:
-      context: ./frontend # ビルドコンテキストの指定 -> Dockerfileが参照できるファイルやディレクトリの範囲を指定している
+      context: ./frontend # ビルドコンテキストの指定 -> Dockerfileが参照できるファイルやディレクトリの範囲を指定
       dockerfile: Dockerfile # 使用するDockerfileの名前を指定
-      target: development # 開発環境用ステージを指定 -> Dockerfile内の development ステージが使用される
-    container_name: simple-budget-frontend
+    container_name: simple-budget-frontend # コンテナ名を明示的に指定（docker ps で識別しやすくなる）
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT}:3000" # ホストの環境変数ポート:コンテナ内部ポート（Next.jsのデフォルトは3000）
     environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://backend:8080/api
-      - BACKEND_URL=http://backend:8080/api
+      - NODE_ENV=${NODE_ENV}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     volumes:
-      - ./frontend:/app
-      - frontend_node_modules:/app/node_modules
-      - frontend_next:/app/.next
+      - ./frontend:/app # ホストの ./frontend ディレクトリをコンテナの /app にマウント -> ホットリロード対応
+      - /app/node_modules # 匿名ボリューム -> ./backend:/app でホスト全体をマウントしても、node_modules だけは上書きされないようにする
+      - /app/.next # 匿名ボリューム -> ビルド成果物をホストから隔離
     depends_on:
-      - backend
+      - backend # バックエンドコンテナが起動してから、フロントエンドを起動
+    networks:
+      - simple-budget-network # すべてのコンテナが同じネットワークに所属 -> コンテナ名（backend, mysql等）でDNS解決が可能
+    restart: unless-stopped # コンテナが予期せず停止した場合、自動的に再起動（手動停止の場合は再起動しない）
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: simple-budget-backend
+    ports:
+      - "${BACKEND_PORT}:8080"
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DATABASE_URL=mysql://${DB_USER}:${DB_PASSWORD}@mysql:3306/${DB_NAME}
+      - JWT_SESSION_SECRET=${JWT_SESSION_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - PORT=8080
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - /app/dist
+    depends_on:
+      mysql:
+        condition: service_healthy # MySQLコンテナのヘルスチェックが成功するまで待機 -> Prismaマイグレーション実行時にDB接続エラーを防ぐ
     networks:
       - simple-budget-network
     restart: unless-stopped
 
-  backend:
-    build:
-      context: ./backend # ビルドコンテキストの指定 -> Dockerfileが参照できるファイルやディレクトリの範囲を指定している
-      dockerfile: Dockerfile # 使用するDockerfileの名前を指定
-      target: development # 開発環境用ステージを指定 -> Dockerfile内の development ステージが使用される
-    container_name: simple-budget-backend
-    ports:
-      - "8080:8080"
-    environment:
-      - NODE_ENV=development
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET=${JWT_SECRET}
-      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
-      - PORT=8080
-    volumes:
-      - ./backend:/app # ホストマシンの ./backendディレクトリを コンテナ内の /app ディレクトリにマウントする -> ホスト上のソースコードの変更がリアルタイムでコンテナに反映されるため、開発中にコードを変更した際コンテナを再ビルドせずに変更が反映される
-      - backend_node_modules:/app/node_modules
-      - backend_dist:/app/dist 
-    depends_on:
-      mysql:
-        condition: service_healthy # MySQLコンテナのヘルスチェックが成功するまで待機
-    networks:
-      - simple-budget-network
-    restart: unless-stopped # Docker Composeの再起動ポリシーを定義 -> コンテナが停止した場合に自動的に再起動するように設定
-
-  # MySQL（ローカル開発用）
   mysql:
     image: mysql:8.0.42
+    platform: linux/arm64 # M1/M2 Mac用のプラットフォーム指定（Intel Macの場合は削除可）
     container_name: simple-budget-mysql
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql_data:/var/lib/mysql # MySQLのデータファイルを名前付きボリュームに永続化 -> コンテナを削除してもデータが消えない ※データは /var/lib/mysql に保存される（MySQL公式の標準パス）
     networks:
       - simple-budget-network
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+    healthcheck: # MySQLが正常に起動しているかを定期的にチェック
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -73,16 +70,8 @@ services:
 
 networks:
   simple-budget-network:
-    driver: bridge
+    driver: bridge # Dockerのデフォルトネットワークドライバー（同一ホスト内のコンテナ間通信）
 
 volumes:
-  mysql_data:
-    driver: local
-  backend_node_modules:
-    driver: local
-  backend_dist:
-    driver: local
-  frontend_node_modules:
-    driver: local
-  frontend_next:
-    driver: local
+  mysql_data: # MySQLのデータを永続化するボリューム -> docker compose down してもデータが消えない
+    driver: local # ローカルディスクにデータを保存
