@@ -121,7 +121,6 @@ export class TransactionService {
       const category = await prisma.category.findFirst({
         where: {
           id: dto.categoryId,
-          userId,
         },
       })
 
@@ -173,7 +172,6 @@ export class TransactionService {
       const category = await prisma.category.findFirst({
         where: {
           id: dto.categoryId,
-          userId,
         },
       })
 
