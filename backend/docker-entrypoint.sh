@@ -3,6 +3,9 @@ set -e
 
 echo "🔍 Waiting for MySQL to be ready..."
 
+# shared ディレクトリに移動してから Prisma コマンドを実行
+cd /app/shared
+
 until npx prisma db push --skip-generate 2>/dev/null || [ $? -eq 0 ]; do
   echo "⏳ MySQL is unavailable - sleeping"
   sleep 2
@@ -28,5 +31,8 @@ elif [ "$NODE_ENV" = "production" ]; then
 fi
 
 echo "🎉 Setup complete! Starting application..."
+
+# backend ディレクトリに戻る
+cd /app/backend
 
 exec "$@"

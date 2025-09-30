@@ -3,8 +3,8 @@ version: '3.9'
 services:
   frontend:
     build:
-      context: ./frontend # ビルドコンテキストの指定 -> Dockerfileが参照できるファイルやディレクトリの範囲を指定
-      dockerfile: Dockerfile # 使用するDockerfileの名前を指定
+      context: . # ビルドコンテキストの指定 -> Dockerfileが参照できるファイルやディレクトリの範囲を指定 （./frontendだけでなく、./sharedも参照できるようにするためにルートを指定）
+      dockerfile: ./frontend/Dockerfile # 使用するDockerfileの名前を指定
     container_name: simple-budget-frontend # コンテナ名を明示的に指定（docker ps で識別しやすくなる）
     ports:
       - "${FRONTEND_PORT}:3000" # ホストの環境変数ポート:コンテナ内部ポート（Next.jsのデフォルトは3000）
@@ -12,9 +12,11 @@ services:
       - NODE_ENV=${NODE_ENV}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     volumes:
-      - ./frontend:/app # ホストの ./frontend ディレクトリをコンテナの /app にマウント -> ホットリロード対応
-      - /app/node_modules # 匿名ボリューム -> ./backend:/app でホスト全体をマウントしても、node_modules だけは上書きされないようにする
-      - /app/.next # 匿名ボリューム -> ビルド成果物をホストから隔離
+      - ./frontend:/app/frontend # ホストの ./frontend ディレクトリをコンテナの /app にマウント -> ホットリロード対応
+      - ./shared:/app/shared # 共有コードをマウント
+      - /app/frontend/node_modules # 匿名ボリューム -> ./backend:/app でホスト全体をマウントしても、node_modules だけは上書きされないようにする
+      - /app/shared/node_modules # 共有コードの node_modules も同様に上書きされないようにする
+      - /app/frontend/.next # 匿名ボリューム -> ビルド成果物をホストから隔離
     depends_on:
       - backend # バックエンドコンテナが起動してから、フロントエンドを起動
     networks:
@@ -23,22 +25,24 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: ./ # ビルドコンテキストの指定 -> Dockerfileが参照できるファイルやディレクトリの範囲を指定 （./backendだけでなく、./sharedも参照できるようにするためにルートを指定）
+      dockerfile: ./backend/Dockerfile
       target: development # Dockerfile内のターゲットステージを指定 -> 開発用イメージをビルド
     container_name: simple-budget-backend
     ports:
       - "${BACKEND_PORT}:8080"
     environment:
       - NODE_ENV=${NODE_ENV}
-      - DATABASE_URL=mysql://${DB_USER}:${DB_PASSWORD}@mysql:3306/${DB_NAME}
+      - DATABASE_URL=${DATABASE_URL}
       - JWT_SESSION_SECRET=${JWT_SESSION_SECRET}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
       - PORT=8080
     volumes:
-      - ./backend:/app
-      - /app/node_modules
-      - /app/dist
+      - ./backend:/app/backend
+      - ./shared:/app/shared
+      - /app/backend/node_modules
+      - /app/shared/node_modules
+      - /app/backend/dist
     depends_on:
       mysql:
         condition: service_healthy # MySQLコンテナのヘルスチェックが成功するまで待機 -> Prismaマイグレーション実行時にDB接続エラーを防ぐ
