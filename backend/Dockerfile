@@ -15,10 +15,16 @@ RUN npm install
 
 COPY . .
 
+# エントリーポイントシェルスクリプトをコピーして実行権限を付与
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 RUN npx prisma generate
 
 EXPOSE 8080
 
+# エントリーポイントを設定し、指定したシェルスクリプトを実行した後にデフォルトのコマンドを実行
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["npm", "run", "dev"]
 
 # 本番実行ステージ
@@ -29,10 +35,15 @@ RUN npm ci --only=production
 
 COPY . .
 
+# 本番環境でも同様にエントリーポイントシェルスクリプトをコピーして実行権限を付与
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Prisma生成とTypeScriptビルド
 RUN npx prisma generate
 RUN npm run build
 
 EXPOSE 8080
 
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["npm", "start"]
