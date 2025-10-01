@@ -1,26 +1,8 @@
 import { Request, Response, NextFunction } from 'express'
-import { z } from 'zod'
+import { registerSchema, loginSchema, refreshTokenSchema } from '@simple-budget/shared'
+
 import { AuthService } from '../services/auth.service'
 import { ResponseUtil } from '../utils/response.util'
-
-// バリデーションスキーマ
-const registerSchema = z.object({
-  email: z.string().email('メールアドレスの形式が不正です'),
-  password: z
-    .string()
-    .min(8, 'パスワードは8文字以上である必要があります')
-    .max(100, 'パスワードは100文字未満である必要があります'),
-  name: z.string().min(1, '名前は必須です').max(50, '名前は50文字未満である必要があります'),
-})
-
-const loginSchema = z.object({
-  email: z.string().email('メールアドレスの形式が不正です'),
-  password: z.string().min(1, 'パスワードは必須です'),
-})
-
-const refreshTokenSchema = z.object({
-  refreshToken: z.string().min(1, 'リフレッシュトークンは必須です'),
-})
 
 export class AuthController {
   // ユーザー登録
@@ -61,7 +43,7 @@ export class AuthController {
 
       await AuthService.logout(userId, sessionToken)
 
-      return ResponseUtil.success(res, { message: 'ログアウトしました' })
+      return ResponseUtil.success(res, null, 204)
     } catch (error) {
       next(error)
     }

@@ -1,4 +1,4 @@
-import { PrismaClient, TransactionType } from '@prisma/client'
+import { PrismaClient, TransactionType } from '@simple-budget/shared'
 
 const prisma = new PrismaClient()
 
@@ -116,24 +116,6 @@ export class TransactionService {
 
   // 取引作成
   static async createTransaction(userId: string, dto: CreateTransactionDto) {
-    // カテゴリが指定されている場合、ユーザーのカテゴリか確認
-    if (dto.categoryId) {
-      const category = await prisma.category.findFirst({
-        where: {
-          id: dto.categoryId,
-        },
-      })
-
-      if (!category) {
-        throw new Error('Category not found')
-      }
-
-      // カテゴリのtypeと取引のtypeが一致するか確認
-      if (category.type !== dto.type) {
-        throw new Error('Category type does not match transaction type')
-      }
-    }
-
     const transaction = await prisma.transaction.create({
       data: {
         ...dto,
@@ -234,7 +216,7 @@ export class TransactionService {
       if (endDate) where.date.lte = endDate
     }
 
-    // 収入の合計
+    // 収入の合計 https://www.prisma.io/docs/orm/reference/prisma-client-reference#aggregate
     const incomeResult = await prisma.transaction.aggregate({
       where: {
         ...where,

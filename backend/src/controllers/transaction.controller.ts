@@ -1,44 +1,13 @@
-import { Request, Response, NextFunction } from 'express'
-import { z } from 'zod'
+import { NextFunction, Request, Response } from 'express'
+import {
+  createTransactionSchema,
+  getSummaryQuerySchema,
+  getTransactionsQuerySchema,
+  updateTransactionSchema,
+} from '@simple-budget/shared'
+
 import { TransactionService } from '../services/transaction.service'
 import { ResponseUtil } from '../utils/response.util'
-
-// バリデーションスキーマ
-const createTransactionSchema = z.object({
-  amount: z.number().positive('金額は正の整数でなければなりません').int('金額は整数でなければなりません'),
-  type: z.enum(['INCOME', 'EXPENSE'], {
-    errorMap: () => ({ message: 'タイプはINCOMEまたはEXPENSEでなければなりません' }),
-  }),
-  description: z.string().max(500).optional(),
-  date: z.string().datetime().or(z.date()),
-  categoryId: z.number().int().positive('カテゴリIDは必須です'),
-})
-
-const updateTransactionSchema = z.object({
-  amount: z.number().positive('金額は正の整数でなければなりません').int('金額は整数でなければなりません').optional(),
-  type: z
-    .enum(['INCOME', 'EXPENSE'], {
-      errorMap: () => ({ message: 'タイプはINCOMEまたはEXPENSEでなければなりません' }),
-    })
-    .optional(),
-  description: z.string().max(500).optional(),
-  date: z.string().datetime().or(z.date()).optional(),
-  categoryId: z.number().int().positive().optional(),
-})
-
-const getTransactionsQuerySchema = z.object({
-  type: z.enum(['INCOME', 'EXPENSE']).optional(),
-  categoryId: z.string().regex(/^\d+$/).transform(Number).optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
-  page: z.string().regex(/^\d+$/).transform(Number).optional(),
-  limit: z.string().regex(/^\d+$/).transform(Number).optional(),
-})
-
-const getSummaryQuerySchema = z.object({
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
-})
 
 export class TransactionController {
   // 取引一覧取得
@@ -89,7 +58,7 @@ export class TransactionController {
       // 日付文字列をDateオブジェクトに変換
       const parsedDto = {
         ...dto,
-        date: typeof dto.date === 'string' ? new Date(dto.date) : dto.date,
+        date: new Date(dto.date),
       }
 
       const transaction = await TransactionService.createTransaction(userId, parsedDto)
@@ -112,7 +81,7 @@ export class TransactionController {
       // 日付文字列をDateオブジェクトに変換
       const parsedDto = {
         ...dto,
-        date: dto.date ? new Date(dto.date) : undefined,
+        date: new Date(dto.date),
       }
 
       const transaction = await TransactionService.updateTransaction(id, userId, parsedDto)

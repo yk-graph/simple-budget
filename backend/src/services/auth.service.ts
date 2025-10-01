@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@simple-budget/shared'
+
 import { PasswordUtil } from '../utils/password.util'
 import { JwtUtil } from '../utils/jwt.util'
 

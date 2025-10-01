@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
-import { ZodError } from 'zod'
-import { Prisma } from '@prisma/client'
+import { Prisma, ZodError } from '@simple-budget/shared'
+
 import { ResponseUtil } from '../utils/response.util'
 
 export const errorMiddleware = (error: Error, req: Request, res: Response, next: NextFunction) => {
@@ -8,7 +8,7 @@ export const errorMiddleware = (error: Error, req: Request, res: Response, next:
 
   // Zodバリデーションエラー
   if (error instanceof ZodError) {
-    const messages = error.errors.map((err) => err.message).join(', ')
+    const messages = error.issues.map((err) => err.message).join(', ')
     return ResponseUtil.validationError(res, messages)
   }
 

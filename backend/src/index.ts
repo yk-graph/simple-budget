@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express'
 import cors from 'cors'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@simple-budget/shared'
+
 import { env } from './config/env'
 import routes from './routes'
 import { errorMiddleware } from './middleware/error.middleware'
