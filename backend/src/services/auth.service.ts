@@ -1,7 +1,8 @@
 import { PrismaClient } from '@simple-budget/shared'
 
-import { PasswordUtil } from '../utils/password.util'
 import { JwtUtil } from '../utils/jwt.util'
+import { PasswordUtil } from '../utils/password.util'
+import { HttpException } from '../errors'
 
 const prisma = new PrismaClient()
 
@@ -25,7 +26,7 @@ export class AuthService {
     })
 
     if (existingUser) {
-      throw new Error('Email already exists')
+      throw HttpException.conflict('既に登録されているメールアドレスです')
     }
 
     // パスワードハッシュ化
@@ -86,14 +87,14 @@ export class AuthService {
     })
 
     if (!user) {
-      throw new Error('Invalid credentials')
+      throw HttpException.notFound('ユーザーが見つかりません')
     }
 
     // パスワード検証
     const isValidPassword = await PasswordUtil.verify(dto.password, user.password)
 
     if (!isValidPassword) {
-      throw new Error('Invalid credentials')
+      throw HttpException.unauthorized('メールアドレスまたはパスワードが正しくありません')
     }
 
     // トークン生成
@@ -162,7 +163,7 @@ export class AuthService {
     })
 
     if (!session) {
-      throw new Error('Invalid refresh token')
+      throw HttpException.unauthorized('無効なリフレッシュトークンです')
     }
 
     // 新しいアクセストークン生成

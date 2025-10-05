@@ -1,10 +1,16 @@
 import { Request, Response, NextFunction } from 'express'
 import { Prisma, ZodError } from '@simple-budget/shared'
 
+import { HttpException } from '../errors'
 import { ResponseUtil } from '../utils/response.util'
 
 export const errorMiddleware = (error: Error, req: Request, res: Response, next: NextFunction) => {
   console.error('Error:', error)
+
+  // HttpException
+  if (error instanceof HttpException) {
+    return ResponseUtil.error(res, error.message, error.statusCode, error.code)
+  }
 
   // Zodバリデーションエラー
   if (error instanceof ZodError) {

@@ -50,4 +50,9 @@ export class ResponseUtil {
   static notFound(res: Response, message: string = 'Resource not found') {
     return this.error(res, message, 404, 'NOT_FOUND')
   }
+
+  // 重複エラー
+  static conflict(res: Response, message: string = 'Resource already exists') {
+    return this.error(res, message, 409, 'CONFLICT')
+  }
 }

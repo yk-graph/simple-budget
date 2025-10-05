@@ -9,7 +9,7 @@ interface TokenPayload {
 export class JwtUtil {
   // アクセストークン生成
   static generateAccessToken(payload: TokenPayload): string {
-    return jwt.sign(payload, env.JWT_SECRET, {
+    return jwt.sign(payload, env.JWT_SESSION_SECRET, {
       expiresIn: env.JWT_EXPIRES_IN,
     })
   }
@@ -23,7 +23,7 @@ export class JwtUtil {
 
   // アクセストークン検証
   static verifyAccessToken(token: string): TokenPayload {
-    return jwt.verify(token, env.JWT_SECRET) as TokenPayload
+    return jwt.verify(token, env.JWT_SESSION_SECRET) as TokenPayload
   }
 
   // リフレッシュトークン検証
