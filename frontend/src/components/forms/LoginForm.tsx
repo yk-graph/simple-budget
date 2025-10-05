@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import { loginSchema, type LoginInput } from '@simple-budget/shared'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { loginSchema, type LoginFormData } from '@/lib/validations/auth'
 
 export default function LoginForm() {
   const router = useRouter()
@@ -18,11 +19,11 @@ export default function LoginForm() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
+  } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
   })
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: LoginInput) => {
     setIsLoading(true)
     setServerError('')
 
@@ -59,28 +60,14 @@ export default function LoginForm() {
 
       <div className="space-y-2">
         <Label htmlFor="email">メールアドレス</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="your@email.com"
-          {...register('email')}
-        />
-        {errors.email && (
-          <p className="text-sm text-destructive">{errors.email.message}</p>
-        )}
+        <Input id="email" type="email" placeholder="your@email.com" {...register('email')} />
+        {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="password">パスワード</Label>
-        <Input
-          id="password"
-          type="password"
-          placeholder="••••••••"
-          {...register('password')}
-        />
-        {errors.password && (
-          <p className="text-sm text-destructive">{errors.password.message}</p>
-        )}
+        <Input id="password" type="password" placeholder="••••••••" {...register('password')} />
+        {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
       </div>
 
       <Button type="submit" disabled={isLoading} className="w-full">

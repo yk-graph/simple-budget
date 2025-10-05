@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     const { name, email, password } = body
 
     // バックエンドAPIへのリクエスト
-    const response = await fetch(`${env.BACKEND_URL}/auth/register`, {
+    const response = await fetch(`${env.API_URL}/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
     })
 
     if (!response.ok) {
-      const errorData = await response.json()
-      return NextResponse.json({ message: errorData.message || '会員登録に失敗しました' }, { status: response.status })
+      const { error } = await response.json()
+      return NextResponse.json({ message: error.message || '会員登録に失敗しました' }, { status: response.status })
     }
 
     const data = await response.json()

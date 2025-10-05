@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import { registerSchema, type RegisterInput } from '@simple-budget/shared'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { registerSchema, type RegisterFormData } from '@/lib/validations/auth'
 
 export default function RegisterForm() {
   const router = useRouter()
@@ -18,11 +19,11 @@ export default function RegisterForm() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<RegisterFormData>({
+  } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
   })
 
-  const onSubmit = async (data: RegisterFormData) => {
+  const onSubmit = async (data: RegisterInput) => {
     setIsLoading(true)
     setServerError('')
 
@@ -59,41 +60,20 @@ export default function RegisterForm() {
 
       <div className="space-y-2">
         <Label htmlFor="name">お名前</Label>
-        <Input
-          id="name"
-          type="text"
-          placeholder="山田太郎"
-          {...register('name')}
-        />
-        {errors.name && (
-          <p className="text-sm text-destructive">{errors.name.message}</p>
-        )}
+        <Input id="name" type="text" placeholder="山田太郎" {...register('name')} />
+        {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="email">メールアドレス</Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="your@email.com"
-          {...register('email')}
-        />
-        {errors.email && (
-          <p className="text-sm text-destructive">{errors.email.message}</p>
-        )}
+        <Input id="email" type="email" placeholder="your@email.com" {...register('email')} />
+        {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="password">パスワード</Label>
-        <Input
-          id="password"
-          type="password"
-          placeholder="8文字以上"
-          {...register('password')}
-        />
-        {errors.password && (
-          <p className="text-sm text-destructive">{errors.password.message}</p>
-        )}
+        <Input id="password" type="password" placeholder="8文字以上" {...register('password')} />
+        {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
         <p className="text-xs text-muted-foreground">8文字以上で入力してください</p>
       </div>
 

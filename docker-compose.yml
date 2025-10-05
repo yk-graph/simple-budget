@@ -10,7 +10,7 @@ services:
       - "${FRONTEND_PORT}:3000" # ホストの環境変数ポート:コンテナ内部ポート（Next.jsのデフォルトは3000）
     environment:
       - NODE_ENV=${NODE_ENV}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - API_URL=${API_URL}
     volumes:
       - ./frontend:/app/frontend # ホストの ./frontend ディレクトリをコンテナの /app にマウント -> ホットリロード対応
       - ./shared:/app/shared # 共有コードをマウント

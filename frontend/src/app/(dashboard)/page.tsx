@@ -41,32 +41,29 @@ async function getDashboardData(): Promise<DashboardData | null> {
 
     // 収支サマリーを取得
     const summaryResponse = await fetch(
-      `${env.BACKEND_URL}/transactions/summary?startDate=${startOfMonth.toISOString()}&endDate=${endOfMonth.toISOString()}`,
+      `${env.API_URL}/transactions/summary?startDate=${startOfMonth.toISOString()}&endDate=${endOfMonth.toISOString()}`,
       {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
       }
     )
 
     // 最近の取引を取得（5件）
-    const transactionsResponse = await fetch(
-      `${env.BACKEND_URL}/transactions?limit=5`,
-      {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    )
+    const transactionsResponse = await fetch(`${env.API_URL}/transactions?limit=5`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    })
 
     if (!summaryResponse.ok || !transactionsResponse.ok) {
       console.error('Backend API failed:', {
         summaryStatus: summaryResponse.status,
-        transactionsStatus: transactionsResponse.status
+        transactionsStatus: transactionsResponse.status,
       })
       return null
     }
